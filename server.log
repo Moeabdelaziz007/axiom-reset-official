@@ -1,0 +1,13 @@
+2025-12-05 14:12:23,938 - AxiomAPI - INFO - 📁 Static files mounted from: /Users/cryptojoker710/Desktop/Axiom ID/axiom-reset-2026/web/public
+INFO:     Started server process [6271]
+INFO:     Waiting for application startup.
+2025-12-05 14:12:23,970 - AxiomAPI - INFO - 🚀 Axiom RESET API Starting...
+2025-12-05 14:12:23,970 - AxiomAPI - INFO - 📦 Registered Agents: ['sofra', 'tajer', 'drmoe', 'tirs', 'ostaz']
+2025-12-05 14:12:23,970 - AxiomAPI - INFO - ✅ Google API Key configured
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51422 - "WebSocket /ws/voice/sofra" [accepted]
+2025-12-05 14:12:35,722 - AxiomVoice - INFO - 🎤 Starting Voice Bridge for Agent: sofra
+INFO:     connection open
+2025-12-05 14:12:36,003 - AxiomVoice - ERROR - ❌ Failed to connect to Gemini Live: received 1007 (invalid frame payload data) API key not valid. Please pass a valid API key.; then sent 1007 (invalid frame payload data) API key not valid. Please pass a valid API key.
+INFO:     connection closed

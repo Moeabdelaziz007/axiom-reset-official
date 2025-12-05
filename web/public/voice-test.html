@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axiom RESET - Voice Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #39FF14);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+        }
+        
+        .agent-selector {
+            margin-bottom: 2rem;
+        }
+        
+        .agent-selector select {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: 1px solid #39FF14;
+            border-radius: 8px;
+            background: rgba(57, 255, 20, 0.1);
+            color: white;
+            cursor: pointer;
+        }
+        
+        .voice-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px solid #39FF14;
+            background: rgba(57, 255, 20, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+        }
+        
+        .voice-button:hover {
+            background: rgba(57, 255, 20, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .voice-button.listening {
+            background: rgba(57, 255, 20, 0.4);
+            animation: pulse 1.5s infinite;
+            border-color: #00ff00;
+        }
+        
+        .voice-button.connected {
+            border-color: #39FF14;
+        }
+        
+        .voice-button.error {
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.4); }
+            50% { box-shadow: 0 0 0 30px rgba(57, 255, 20, 0); }
+        }
+        
+        .mic-icon {
+            width: 50px;
+            height: 50px;
+            fill: #39FF14;
+        }
+        
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #39FF14;
+        }
+        
+        .transcript {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 100px;
+            text-align: right;
+        }
+        
+        .transcript h3 {
+            color: #888;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .transcript p {
+            color: #fff;
+            line-height: 1.6;
+        }
+        
+        .logs {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            max-width: 600px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #888;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.3rem;
+        }
+        
+        .log-entry.success { color: #39FF14; }
+        .log-entry.error { color: #ff4444; }
+        .log-entry.info { color: #4488ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Axiom Voice Test</h1>
+        <p class="subtitle">اختبار التحدث مع الوكلاء</p>
+        
+        <div class="agent-selector">
+            <select id="agentSelect">
+                <option value="sofra">سفرة - المطاعم 🍽️</option>
+                <option value="tajer">تاجر - العقارات 🏠</option>
+                <option value="drmoe">د. مو - الصيدلية 💊</option>
+                <option value="tirs">ترس - الصناعة ⚙️</option>
+                <option value="ostaz">أستاذ - التعليم 📚</option>
+            </select>
+        </div>
+        
+        <button class="voice-button" id="voiceBtn">
+            <svg class="mic-icon" viewBox="0 0 24 24">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V19h3v2H9v-2h3v-3.07z"/>
+            </svg>
+        </button>
+        
+        <div class="status" id="status">اضغط للاتصال</div>
+        
+        <div class="transcript">
+            <h3>المحادثة:</h3>
+            <p id="transcriptText">...</p>
+        </div>
+        
+        <div class="logs" id="logs"></div>
+    </div>
+
+    <script>
+        const API_URL = 'ws://localhost:8000';
+        let ws = null;
+        let audioContext = null;
+        let mediaStream = null;
+        let recorder = null;
+        let isConnected = false;
+        let isListening = false;
+        
+        const voiceBtn = document.getElementById('voiceBtn');
+        const status = document.getElementById('status');
+        const agentSelect = document.getElementById('agentSelect');
+        const transcriptText = document.getElementById('transcriptText');
+        const logs = document.getElementById('logs');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+        
+        async function connect() {
+            const agentId = agentSelect.value;
+            log(`جاري الاتصال بـ ${agentId}...`, 'info');
+            
+            ws = new WebSocket(`${API_URL}/ws/voice/${agentId}`);
+            ws.binaryType = 'arraybuffer';
+            
+            ws.onopen = () => {
+                log('تم فتح الاتصال', 'success');
+            };
+            
+            ws.onmessage = async (event) => {
+                if (event.data instanceof ArrayBuffer) {
+                    log(`استلام صوت: ${event.data.byteLength} bytes`, 'info');
+                    await playAudio(event.data);
+                } else {
+                    const data = JSON.parse(event.data);
+                    log(`رسالة: ${JSON.stringify(data)}`, 'info');
+                    
+                    if (data.type === 'connected') {
+                        isConnected = true;
+                        voiceBtn.classList.add('connected');
+                        status.textContent = `متصل بـ ${agentId} - اضغط للتحدث`;
+                        log(`✅ متصل بـ ${data.agent}`, 'success');
+                    } else if (data.type === 'text') {
+                        transcriptText.textContent = data.content;
+                    } else if (data.type === 'error') {
+                        log(`❌ خطأ: ${data.content}`, 'error');
+                        voiceBtn.classList.add('error');
+                    }
+                }
+            };
+            
+            ws.onerror = (error) => {
+                log(`❌ خطأ في الاتصال`, 'error');
+                voiceBtn.classList.add('error');
+            };
+            
+            ws.onclose = () => {
+                log('تم إغلاق الاتصال', 'info');
+                isConnected = false;
+                voiceBtn.classList.remove('connected', 'listening');
+                status.textContent = 'اضغط للاتصال';
+            };
+        }
+        
+        async function startListening() {
+            if (!isConnected) {
+                await connect();
+                return;
+            }
+            
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+                
+                audioContext = new AudioContext({ sampleRate: 16000 });
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                
+                // Use ScriptProcessor for simplicity in testing
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                processor.onaudioprocess = (e) => {
+                    if (ws && ws.readyState === WebSocket.OPEN && isListening) {
+                        const float32 = e.inputBuffer.getChannelData(0);
+                        const int16 = new Int16Array(float32.length);
+                        for (let i = 0; i < float32.length; i++) {
+                            int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+                        }
+                        ws.send(int16.buffer);
+                    }
+                };
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+                
+                isListening = true;
+                voiceBtn.classList.add('listening');
+                status.textContent = '🎤 جاري الاستماع...';
+                log('🎤 بدء التسجيل', 'success');
+                
+            } catch (error) {
+                log(`❌ خطأ في الميكروفون: ${error.message}`, 'error');
+            }
+        }
+        
+        function stopListening() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'end_turn' }));
+            }
+            
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            status.textContent = isConnected ? 'اضغط للتحدث' : 'اضغط للاتصال';
+            log('🔇 توقف التسجيل', 'info');
+        }
+        
+        async function playAudio(arrayBuffer) {
+            try {
+                if (!audioContext) {
+                    audioContext = new AudioContext({ sampleRate: 16000 });
+                }
+                
+                const int16 = new Int16Array(arrayBuffer);
+                const float32 = new Float32Array(int16.length);
+                
+                for (let i = 0; i < int16.length; i++) {
+                    float32[i] = int16[i] / 32768.0;
+                }
+                
+                const buffer = audioContext.createBuffer(1, float32.length, 16000);
+                buffer.getChannelData(0).set(float32);
+                
+                const source = audioContext.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioContext.destination);
+                source.start();
+                
+            } catch (error) {
+                log(`❌ خطأ في تشغيل الصوت: ${error.message}`, 'error');
+            }
+        }
+        
+        // Event Listeners
+        voiceBtn.addEventListener('mousedown', startListening);
+        voiceBtn.addEventListener('mouseup', stopListening);
+        voiceBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startListening(); });
+        voiceBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopListening(); });
+        
+        agentSelect.addEventListener('change', () => {
+            if (ws) {
+                ws.close();
+            }
+            voiceBtn.classList.remove('connected', 'listening', 'error');
+            status.textContent = 'اضغط للاتصال';
+        });
+        
+        log('🚀 جاهز للاختبار', 'success');
+    </script>
+</body>
+</html>
